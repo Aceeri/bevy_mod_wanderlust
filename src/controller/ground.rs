@@ -302,8 +302,8 @@ pub fn ground_cast(
     shape_pos = shape_pos + shape_vel * offset;
 
     /*ctx.cast_ray_and_get_normal(shape_pos, shape_vel, max_toi, true, filter)
-        .map(|(entity, inter)| (entity, inter.into()))*/
-        None
+    .map(|(entity, inter)| (entity, inter.into()))*/
+    None
 }
 
 /*

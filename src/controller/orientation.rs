@@ -27,8 +27,8 @@ impl Default for Float {
             min_offset: -0.3,
             max_offset: 0.05,
             spring: Spring {
-                strength: 100.0,
-                damping: 0.8,
+                frequency: 10.0,
+                damp_ratio: 0.8,
             },
         }
     }
@@ -71,9 +71,9 @@ pub fn float_force(
         let displacement = float.distance - ground.cast.toi;
 
         if displacement > 0.0 {
-            let strength = displacement * float.spring.strength;
-            let damping = relative_velocity * float.spring.damp_coefficient(mass.mass);
-            force.linear += up_vector * (strength - damping);
+            //let strength = displacement * float.spring.strength;
+            //let damping = relative_velocity * float.spring.damp_coefficient(mass.mass);
+            //force.linear += up_vector * (strength - damping);
         }
     }
 }
@@ -93,8 +93,8 @@ impl Default for Upright {
     fn default() -> Self {
         Self {
             spring: Spring {
-                strength: 10.0,
-                damping: 0.5,
+                frequency: 10.0,
+                damp_ratio: 0.8,
             },
             forward_vector: None,
         }
@@ -155,8 +155,9 @@ pub fn upright_force(
 
             let velocity = velocity.angular - ground_rot;
 
-            let spring = (desired_axis * upright.spring.strength) - (velocity * damping);
-            spring.clamp_length_max(upright.spring.strength)
+            //let spring = (desired_axis * upright.spring.strength) - (velocity * damping);
+            //spring.clamp_length_max(upright.spring.strength)
+            Vec3::ZERO
         };
     }
 }

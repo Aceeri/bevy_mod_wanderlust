@@ -299,15 +299,12 @@ pub fn jump_force(
             if !input.jumping {
                 // Cut the jump short if we aren't holding the jump down.
                 jumping.reset_jump();
-                let stop_force = 
-                    velocity.project_onto(gravity.up_vector) * -jumping.stop_force;
-                force.linear +=stop_force;
+                let stop_force = velocity.project_onto(gravity.up_vector) * -jumping.stop_force;
+                force.linear += stop_force;
             } else {
                 ground_caster.skip_ground_check_timer = jumping.skip_ground_check_duration;
 
-                let jump = gravity.up_vector
-                    * jumping.force
-                    * jumping.decay_multiplier();
+                let jump = gravity.up_vector * jumping.force * jumping.decay_multiplier();
                 force.linear += jump;
             }
         }
