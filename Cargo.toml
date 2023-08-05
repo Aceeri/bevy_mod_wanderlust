@@ -26,7 +26,6 @@ bevy_rapier3d = { version = "0.22", default-features = false, features = [
     "async-collider",
     "dim3",
 ], optional = true }
-plotly = "0.8"
 
 [dev-dependencies]
 bevy = "0.11"

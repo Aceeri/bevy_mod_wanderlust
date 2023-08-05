@@ -65,12 +65,16 @@ impl Spring {
 
 #[cfg(test)]
 mod tests {
-    use super::{Spring};
+    use super::Spring;
     use bevy::prelude::*;
     use plotly::common::*;
     use plotly::*;
 
-    pub fn damped_harmonic_oscillator(frequency: f32, damp_ratio: f32, timestep: f32) -> Box<dyn Trace> {
+    pub fn damped_harmonic_oscillator(
+        frequency: f32,
+        damp_ratio: f32,
+        timestep: f32,
+    ) -> Box<dyn Trace> {
         let mut time = 0.0;
 
         let mass = 1.0;
