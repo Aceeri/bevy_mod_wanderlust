@@ -8,7 +8,7 @@ use bevy::{
     window::{Cursor, PrimaryWindow},
 };
 use bevy_mod_wanderlust::{
-    Controller, ControllerBundle, ControllerInput, ControllerPhysicsBundle, Movement,
+    Controller, ControllerBundle, ControllerInput, ControllerPhysicsBundle, GroundCaster, Movement,
     RapierPhysicsBundle, Strength, Upright, WanderlustPlugin,
 };
 use bevy_rapier3d::prelude::*;
@@ -29,7 +29,7 @@ fn main() {
                 ..default()
             }),
             RapierPhysicsPlugin::<NoUserData>::default(),
-            RapierDebugRenderPlugin::default(),
+            //RapierDebugRenderPlugin::default(),
             WanderlustPlugin::default(),
             aether_spyglass::SpyglassPlugin,
         ))
@@ -92,6 +92,10 @@ pub fn player(
                 controller: Controller {
                     movement: Movement {
                         acceleration_force: Strength::Scaled(5.0),
+                        ..default()
+                    },
+                    ground_caster: GroundCaster {
+                        cast_collider: Some(Collider::cylinder(0.3, 0.3)),
                         ..default()
                     },
                     ..default()
@@ -211,9 +215,9 @@ pub fn slopes(
     let angles = 18;
     let max_angle = PI / 2.0;
     let angle_increment = max_angle / angles as f32;
-    for angle in 0..angles {
+    for angle in 0..=angles {
         let radians = angle as f32 * angle_increment;
-        let width = 1.5;
+        let width = 2.5;
         commands.spawn((
             PbrBundle {
                 mesh: meshes.add(Mesh::from(shape::Cube { size: 1.0 })),

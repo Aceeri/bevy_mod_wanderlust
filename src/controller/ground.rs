@@ -1,6 +1,6 @@
 use crate::controller::*;
 use bevy::utils::HashSet;
-use bevy_rapier3d::{na::Isometry3, prelude::*};
+use bevy_rapier3d::{na::Isometry3, parry::query::DefaultQueryDispatcher, prelude::*};
 
 /// How to detect if something below the controller is suitable
 /// for standing on.
@@ -140,7 +140,7 @@ pub fn find_ground(
                 |collider| collider != entity && !caster.exclude_from_ground.contains(&collider);
             let filter = QueryFilter::new().exclude_sensors().predicate(&predicate);
 
-            ground_cast(
+            let Some((ground_entity, cast)) = ground_cast(
                 &*ctx,
                 &colliders,
                 &globals,
@@ -150,7 +150,13 @@ pub fn find_ground(
                 &shape,
                 caster.cast_length,
                 filter,
-            )
+             ) else { continue };
+            let Ok(ground_collider) = colliders.get(ground_entity) else { continue };
+            let Ok(ground_tf) = globals.get(ground_entity) else { continue };
+
+            //DefaultQueryDispatcher.contact_manifolds(pos12, g1, g2, prediction, manifolds, workspace)
+
+            Some((ground_entity, cast))
         } else {
             caster.skip_ground_check_timer = (caster.skip_ground_check_timer - dt).max(0.0);
             None
@@ -226,8 +232,8 @@ impl From<Toi> for CastResult {
     fn from(toi: Toi) -> Self {
         Self {
             toi: toi.toi,
-            normal: toi.normal1,
-            witness: toi.witness1,
+            normal: toi.normal2,
+            witness: toi.witness2,
         }
     }
 }
@@ -257,7 +263,7 @@ pub fn ground_cast(
     filter: QueryFilter,
 ) -> Option<(Entity, CastResult)> {
     for _ in 0..12 {
-        if let Some((entity, toi)) =
+        if let Some((entity, mut toi)) =
             ctx.cast_shape(shape_pos, shape_rot, shape_vel, shape, max_toi, filter)
         {
             if toi.status != TOIStatus::Penetrating {

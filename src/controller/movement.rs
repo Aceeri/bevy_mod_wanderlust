@@ -122,21 +122,22 @@ pub fn movement_force(
         let force_scale = movement.force_scale(&gravity);
 
         let Some(ground) = cast.last() else { continue };
-        let ground_angle = ground.cast.normal.angle_between(gravity.up_vector);
-        let slipping = (ground.cast.normal.length() > 0.0
-            && ground_angle > ground_caster.max_ground_angle)
-            || ground.cast.normal.length() == 0.0;
-
-        let slipping = true;
 
         let input_dir = input.movement.clamp_length_max(1.0);
         let input_goal_vel = input_dir * movement.max_speed;
         let mut goal_vel = input_goal_vel;
 
-        let slip_force = if slipping {
-            if let GroundCast::Touching(ground) = cast {
+        let slip_force = if let GroundCast::Touching(ground) = cast {
+            gizmos.ray(ground.cast.witness, ground.cast.normal, Color::BLUE);
+
+            let ground_angle = ground.cast.normal.angle_between(gravity.up_vector);
+            let slipping = (ground.cast.normal.length() > 0.0
+                && ground_angle > ground_caster.max_ground_angle)
+                || ground.cast.normal.length() == 0.0;
+            let slipping = false;
+
+            if slipping {
                 let (x, z) = ground.cast.normal.any_orthonormal_pair();
-                gizmos.ray(ground.cast.witness, ground.cast.normal, Color::BLUE);
 
                 let projected_x = gravity.up_vector.project_onto(x);
                 let projected_z = gravity.up_vector.project_onto(z);
@@ -163,7 +164,6 @@ pub fn movement_force(
         } else {
             None
         };
-
 
         let current_vel = velocity.linear - ground.point_velocity.linvel;
 
