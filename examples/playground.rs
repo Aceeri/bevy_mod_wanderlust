@@ -8,8 +8,8 @@ use bevy::{
     window::{Cursor, PrimaryWindow},
 };
 use bevy_mod_wanderlust::{
-    ControllerBundle, ControllerInput, ControllerPhysicsBundle, RapierPhysicsBundle, Upright,
-    WanderlustPlugin, Strength, Movement, Controller,
+    Controller, ControllerBundle, ControllerInput, ControllerPhysicsBundle, Movement,
+    RapierPhysicsBundle, Strength, Upright, WanderlustPlugin,
 };
 use bevy_rapier3d::prelude::*;
 use std::f32::consts::{FRAC_2_PI, PI};
@@ -34,13 +34,14 @@ fn main() {
             aether_spyglass::SpyglassPlugin,
         ))
         .insert_resource(Sensitivity(1.0))
-        .add_systems(Startup, (player, ground, lights, slopes))
+        .add_systems(Startup, (player, ground, lights, slopes, moving_objects))
         // Add to PreUpdate to ensure updated before movement is calculated
         .add_systems(
             Update,
             (
                 movement_input.before(bevy_mod_wanderlust::movement_force),
                 toggle_cursor_lock,
+                oscillating,
             ),
         )
         .add_systems(
@@ -227,6 +228,62 @@ pub fn slopes(
             Name::from(format!("Slope {:?} radians", radians)),
             Collider::cuboid(0.5, 0.5, 0.5),
         ));
+    }
+}
+
+pub fn moving_objects(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut mats: ResMut<Assets<StandardMaterial>>,
+) {
+    let material = mats.add(Color::WHITE.into());
+    let mesh = meshes.add(Mesh::from(shape::Cube::default()));
+
+    // simple
+    let simple_width = 5.0;
+    commands.spawn((
+        PbrBundle {
+            mesh: meshes.add(Mesh::from(shape::Cube { size: 1.0 })),
+            material: material.clone(),
+            transform: Transform {
+                translation: Vec3::new(5.0, 0.3, 5.0),
+                scale: Vec3::new(simple_width, 0.1, simple_width),
+                ..default()
+            },
+            ..default()
+        },
+        Name::from("Simple moving platform"),
+        RigidBody::KinematicVelocityBased,
+        Collider::cuboid(0.5, 0.5, 0.5),
+        Oscillator::default(),
+        Velocity {
+            linvel: Vec3::ZERO,
+            angvel: Vec3::ZERO,
+        },
+    ));
+}
+
+#[derive(Component)]
+pub struct Oscillator {
+    pub strength: Vec3,
+}
+
+impl Default for Oscillator {
+    fn default() -> Self {
+        Self {
+            strength: Vec3::ONE,
+        }
+    }
+}
+
+pub fn oscillating(time: Res<Time>, mut oscillators: Query<(&mut Velocity, &Oscillator)>) {
+    for (mut velocity, oscillator) in &mut oscillators {
+        let elapsed = time.elapsed_seconds();
+        let period = 5.0;
+        let along = elapsed.rem_euclid(period) / period * std::f32::consts::TAU;
+        let x = along.cos();
+        let y = along.sin();
+        velocity.linvel = Vec3::new(x, 0.0, y) * oscillator.strength;
     }
 }
 
