@@ -34,7 +34,10 @@ fn main() {
             aether_spyglass::SpyglassPlugin,
         ))
         .insert_resource(Sensitivity(1.0))
-        .add_systems(Startup, (player, ground, lights, slopes, moving_objects))
+        .add_systems(
+            Startup,
+            (player, ground, lights, slopes, moving_objects, steps),
+        )
         // Add to PreUpdate to ensure updated before movement is calculated
         .add_systems(
             Update,
@@ -193,12 +196,67 @@ fn lights(
     });
 }
 
+pub fn steps(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut mats: ResMut<Assets<StandardMaterial>>,
+) {
+    let material = mats.add(StandardMaterial {
+        base_color: Color::PINK,
+        perceptual_roughness: 0.5,
+        reflectance: 0.05,
+        ..default()
+    });
+
+    let step_increment = 0.2;
+    let width = 0.3;
+    let steps = 12;
+    let stairs = commands
+        .spawn(SpatialBundle {
+            transform: Transform {
+                translation: Vec3::new(5.0, 0.0, -5.0),
+                rotation: Quat::from_rotation_y(PI / 4.0),
+                ..default()
+            },
+            ..default()
+        })
+        .id();
+
+    for step in 1..=steps {
+        commands
+            .spawn((
+                PbrBundle {
+                    mesh: meshes.add(Mesh::from(shape::Cube { size: 1.0 })),
+                    material: material.clone(),
+                    transform: Transform {
+                        translation: Vec3::new(
+                            step as f32 * width,
+                            step as f32 * step_increment / 2.0,
+                            0.0,
+                        ),
+                        scale: Vec3::new(width, step as f32 * step_increment, 5.0),
+                        ..default()
+                    },
+                    ..default()
+                },
+                Name::from("Step"),
+                Collider::cuboid(0.5, 0.5, 0.5),
+            ))
+            .set_parent(stairs);
+    }
+}
+
 pub fn slopes(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut mats: ResMut<Assets<StandardMaterial>>,
 ) {
-    let material = mats.add(Color::WHITE.into());
+    let material = mats.add(StandardMaterial {
+        base_color: Color::GREEN,
+        perceptual_roughness: 0.5,
+        reflectance: 0.05,
+        ..default()
+    });
     let (hw, hh, hl) = (0.25, 3.0, 5.0);
     let mesh = meshes.add(
         shape::Box {
@@ -240,7 +298,12 @@ pub fn moving_objects(
     mut meshes: ResMut<Assets<Mesh>>,
     mut mats: ResMut<Assets<StandardMaterial>>,
 ) {
-    let material = mats.add(Color::WHITE.into());
+    let material = mats.add(StandardMaterial {
+        base_color: Color::YELLOW,
+        perceptual_roughness: 0.5,
+        reflectance: 0.05,
+        ..default()
+    });
     let mesh = meshes.add(Mesh::from(shape::Cube::default()));
 
     // simple

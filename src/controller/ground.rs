@@ -140,7 +140,7 @@ pub fn find_ground(
                 |collider| collider != entity && !caster.exclude_from_ground.contains(&collider);
             let filter = QueryFilter::new().exclude_sensors().predicate(&predicate);
 
-            let Some((ground_entity, cast)) = ground_cast(
+            ground_cast(
                 &*ctx,
                 &colliders,
                 &globals,
@@ -150,13 +150,7 @@ pub fn find_ground(
                 &shape,
                 caster.cast_length,
                 filter,
-             ) else { continue };
-            let Ok(ground_collider) = colliders.get(ground_entity) else { continue };
-            let Ok(ground_tf) = globals.get(ground_entity) else { continue };
-
-            //DefaultQueryDispatcher.contact_manifolds(pos12, g1, g2, prediction, manifolds, workspace)
-
-            Some((ground_entity, cast))
+            )
         } else {
             caster.skip_ground_check_timer = (caster.skip_ground_check_timer - dt).max(0.0);
             None
