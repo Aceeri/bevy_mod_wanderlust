@@ -13,12 +13,15 @@ use bevy_mod_wanderlust::{
 };
 use bevy_rapier3d::prelude::*;
 use std::f32::consts::{FRAC_2_PI, PI};
+use bevy_framepace::*;
 
 fn main() {
     App::new()
         .add_plugins((
             DefaultPlugins.set(WindowPlugin {
                 primary_window: Some(Window {
+                    position: WindowPosition::At(IVec2::new(0, 0)),
+                    resolution: (1000.0, 1080.0).into(),
                     cursor: Cursor {
                         visible: false,
                         grab_mode: CursorGrabMode::Locked,
@@ -31,12 +34,16 @@ fn main() {
             RapierPhysicsPlugin::<NoUserData>::default(),
             //RapierDebugRenderPlugin::default(),
             WanderlustPlugin::default(),
-            aether_spyglass::SpyglassPlugin,
+            bevy_inspector_egui::quick::WorldInspectorPlugin::default(),
+            //FramepacePlugin,
         ))
+        .insert_resource(FramepaceSettings {
+            limiter: Limiter::Manual(std::time::Duration::from_secs_f64(0.1))
+        })
         .insert_resource(Sensitivity(1.0))
         .add_systems(
             Startup,
-            (player, ground, lights, slopes, moving_objects, steps),
+            (player, ground, lights, slopes, moving_objects, steps, walls),
         )
         // Add to PreUpdate to ensure updated before movement is calculated
         .add_systems(
@@ -244,6 +251,71 @@ pub fn steps(
             ))
             .set_parent(stairs);
     }
+}
+
+pub fn walls(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut mats: ResMut<Assets<StandardMaterial>>,
+) {
+    let materials = [Color::GRAY, Color::WHITE, Color::BLACK];
+    let materials = materials
+        .iter()
+        .map(|color| {
+            mats.add(StandardMaterial {
+                base_color: *color,
+                perceptual_roughness: 0.5,
+                reflectance: 0.05,
+                ..default()
+            })
+        })
+        .collect::<Vec<_>>();
+
+    let wall = commands
+        .spawn(SpatialBundle {
+            transform: Transform {
+                translation: Vec3::new(-5.0, 0.0, -5.0),
+                rotation: Quat::from_rotation_y(-PI / 4.0),
+                ..default()
+            },
+            ..default()
+        })
+        .id();
+
+    let parts = 20;
+    let width = 0.25;
+    for part in 0..=parts {
+        let material = materials[part % materials.len()].clone();
+        commands.spawn((
+            PbrBundle {
+                mesh: meshes.add(Mesh::from(shape::Cube { size: 1.0 })),
+                material: material,
+                transform: Transform {
+                    translation: Vec3::new(0.0, 0.0, part as f32 * width),
+                    scale: Vec3::new(1.0, 5.0, width),
+                    ..default()
+                },
+                ..default()
+            },
+            Name::from("Wall segment"),
+            Collider::cuboid(0.5, 0.5, 0.5),
+        )).set_parent(wall);
+    }
+
+        commands.spawn((
+            PbrBundle {
+                mesh: meshes.add(Mesh::from(shape::Cube { size: 1.0 })),
+                material: materials[0].clone(),
+                transform: Transform {
+                    translation: Vec3::new(0.0, 0.0, ((parts + 1) as f32 * width) * 2.0),
+                    scale: Vec3::new(1.0, 5.0, width * parts as f32),
+                    ..default()
+                },
+                ..default()
+            },
+            Name::from("Full wall segment"),
+            Collider::cuboid(0.5, 0.5, 0.5),
+        )).set_parent(wall);
 }
 
 pub fn slopes(

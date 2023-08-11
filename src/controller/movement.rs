@@ -168,22 +168,13 @@ pub fn movement_force(
         let current_vel = velocity.linear - ground.point_velocity.linvel;
 
         let displacement = (goal_vel - current_vel) * force_scale;
-        if displacement.length() > 0.1 {
-            info!("displa: {:.2?}", displacement);
-        }
         let instant_force = displacement.abs() * mass.mass / dt;
-        if instant_force.length() > 0.1 {
-            info!("instan: {:.2?}", instant_force);
-        }
 
         let strength = movement.acceleration_force.get(mass.mass, dt);
 
         // This is effectively an implicit spring-damper function since the displacement is the velocity.
         // We could try to add a damping factor here based off acceleration, but I'm not sure it matters.
         let movement_force = (displacement * strength).clamp(-instant_force, instant_force);
-        if movement_force.length() > 0.1 {
-            info!("moveme: {:.2?}", movement_force);
-        }
 
         force.linear = movement_force - slip_force.unwrap_or(Vec3::ZERO);
     }

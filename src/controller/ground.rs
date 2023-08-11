@@ -125,6 +125,8 @@ pub fn find_ground(
 
     mut ground_shape_casts: Local<Vec<(Entity, Toi)>>,
     mut ground_ray_casts: Local<Vec<(Entity, RayIntersection)>>,
+
+    mut gizmos: Gizmos,
 ) {
     let dt = ctx.integration_parameters.dt;
     for (entity, tf, gravity, mut caster, mut cast) in &mut casters {
@@ -150,6 +152,9 @@ pub fn find_ground(
                 &shape,
                 caster.cast_length,
                 filter,
+                caster.max_ground_angle,
+
+                &mut gizmos,
             )
         } else {
             caster.skip_ground_check_timer = (caster.skip_ground_check_timer - dt).max(0.0);
@@ -226,8 +231,8 @@ impl From<Toi> for CastResult {
     fn from(toi: Toi) -> Self {
         Self {
             toi: toi.toi,
-            normal: toi.normal2,
-            witness: toi.witness2,
+            normal: toi.normal1,
+            witness: toi.witness1,
         }
     }
 }
@@ -255,15 +260,24 @@ pub fn ground_cast(
     shape: &Collider,
     max_toi: f32,
     filter: QueryFilter,
+
+    max_angle: f32,
+
+    gizmos: &mut Gizmos,
 ) -> Option<(Entity, CastResult)> {
     for _ in 0..12 {
         if let Some((entity, mut toi)) =
             ctx.cast_shape(shape_pos, shape_rot, shape_vel, shape, max_toi, filter)
         {
-            if toi.status != TOIStatus::Penetrating {
+            let ground_angle = (-shape_vel).angle_between(toi.normal1);
+
+            if toi.status != TOIStatus::Penetrating && ground_angle < max_angle {
+                //gizmos.sphere(shape_pos, shape_rot, 0.3, Color::GREEN);
+                gizmos.ray(toi.witness1, toi.normal1, Color::BLUE);
                 return Some((entity, toi.into()));
             }
 
+            //gizmos.sphere(shape_pos, shape_rot, 0.3, Color::RED);
             match (globals.get(entity), colliders.get(entity)) {
                 (Ok(ground_global), Ok(ground_collider)) => {
                     let cast_iso = Isometry3 {
