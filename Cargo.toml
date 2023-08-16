@@ -33,6 +33,7 @@ aether_spyglass = "0.2"
 bevy-inspector-egui = "0.19"
 bevy_framepace = "0.13"
 bevy_rapier3d = { version = "0.22", features = ["debug-render"] }
+bevy_fly_camera = { git = "https://github.com/zachbateman/bevy_fly_camera", branch = "bevy_0.11.0"}
 
 # Enable a small amount of optimization in debug mode
 [profile.dev]
