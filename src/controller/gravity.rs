@@ -20,7 +20,20 @@ impl Default for Gravity {
     fn default() -> Self {
         Gravity {
             acceleration: -9.817,
-            up_vector: Vec3::Y,
+            //up_vector: Vec3::Y,
+            up_vector: (Vec3::new(1.0, 0.0, 0.0) + Vec3::new(0.0, 0.0, 1.0)).normalize(),
+        }
+    }
+}
+
+impl Gravity {
+    pub fn project(&self, other: Vec3) -> Vec3 {
+        let up = self.up_vector.normalize();
+        if up.length_squared() > 0.0 {
+            let (x, z) = up.any_orthonormal_pair();
+            other.project_onto(x) + other.project_onto(z)
+        } else {
+            other
         }
     }
 }
@@ -34,8 +47,9 @@ pub struct GravityForce {
 }
 
 /// Calculate gravity force.
-pub fn gravity_force(mut query: Query<(&mut GravityForce, &Gravity, &ControllerMass)>) {
-    for (mut force, gravity, mass) in &mut query {
+pub fn gravity_force(mut query: Query<(&GlobalTransform, &mut GravityForce, &Gravity, &ControllerMass)>, mut gizmos: Gizmos) {
+    for (global, mut force, gravity, mass) in &mut query {
         force.linear = gravity.up_vector * mass.mass * gravity.acceleration;
+        gizmos.ray(global.translation(), force.linear, Color::YELLOW);
     }
 }

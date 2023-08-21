@@ -1,3 +1,4 @@
+
 //!
 
 use bevy::render::camera::Projection;
@@ -11,7 +12,7 @@ use bevy_framepace::*;
 use bevy_mod_wanderlust::{
     Controller, ControllerBundle, ControllerInput, ControllerPhysicsBundle, Float, GroundCaster,
     Jump, Movement, RapierPhysicsBundle, Spring, SpringStrength, Strength, Upright,
-    WanderlustPlugin, Gravity,
+    WanderlustPlugin,
 };
 use bevy_rapier3d::prelude::*;
 use std::f32::consts::{FRAC_2_PI, PI};
@@ -54,6 +55,7 @@ fn main() {
             Startup,
             (
                 player,
+                globe,
                 ground,
                 lights,
                 slopes,
@@ -96,7 +98,6 @@ fn main() {
                 toggle_cursor_lock,
                 oscillating,
                 controlled_platform,
-                change_gravity,
             ),
         )
         .add_systems(
@@ -132,22 +133,33 @@ struct PlayerBody;
 #[derive(Reflect, Resource)]
 struct Sensitivity(f32);
 
-pub fn change_gravity(input: Res<Input<KeyCode>>, mut gravities: Query<&mut Gravity>) {
-    for mut gravity in &mut gravities {
-        if input.pressed(KeyCode::O) {
-            gravity.up_vector = Quat::from_rotation_x(1.0 * std::f32::consts::PI / 180.0) * gravity.up_vector;
+pub fn globe(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut mats: ResMut<Assets<StandardMaterial>>,
+) {
+    let material = mats.add(Color::WHITE.into());
+    let mesh = meshes.add(
+        shape::UVSphere {
+            radius: 0.5,
+            ..default()
         }
-
-        if input.pressed(KeyCode::I) {
-            gravity.up_vector = Quat::from_rotation_z(1.0 * std::f32::consts::PI / 180.0) * gravity.up_vector;
-        }
-
-        gravity.up_vector = gravity.up_vector.normalize();
-
-        info!(
-            "up: {:?}", gravity.up_vector.length(),
-        );
-    }
+        .into(),
+    );
+    commands.spawn((
+        PbrBundle {
+            mesh,
+            material: material.clone(),
+            transform: Transform::from_xyz(-2.0, 2.0, 0.0),
+            ..default()
+        },
+        RigidBody::Dynamic,
+        Velocity::default(),
+        ExternalImpulse::default(),
+        ReadMassProperties::default(),
+        Collider::ball(0.5),
+        Name::from("Ball"),
+    ));
 }
 
 pub fn player(
@@ -307,14 +319,14 @@ pub fn ground(
             transform: Transform::from_xyz(0.0, -0.05, 0.0),
             ..default()
         },
-        //Collider::halfspace(Vec3::Y).unwrap(),
+        Collider::halfspace(Vec3::Y).unwrap(),
         ColliderDebugColor(Color::Rgba {
             red: 0.0,
             green: 0.0,
             blue: 0.0,
             alpha: 0.0,
         }),
-        Collider::cuboid(size / 2.0, 0.1, size / 2.0),
+        //Collider::cuboid(size / 2.0, 0.1, size / 2.0),
         Name::from("Ground"),
     ));
 
@@ -763,7 +775,7 @@ fn mouse_look(
 
     cam_tf.rotation =
         Quat::from_rotation_y(player_cam.yaw) * Quat::from_rotation_x(player_cam.pitch);
-    //upright.forward_vector = Some(Quat::from_rotation_y(player_cam.yaw) * Vec3::X);
+    upright.forward_vector = Some(Quat::from_rotation_y(player_cam.yaw) * Vec3::X);
 }
 
 fn toggle_cursor_lock(

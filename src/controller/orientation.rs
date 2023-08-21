@@ -151,12 +151,18 @@ pub fn upright_force(
                 Vec3::ZERO
             };
 
-            let local_velocity = velocity.angular - ground_rot;
 
-            let spring = (desired_axis * upright.spring.strength.get(mass.inertia))
-                - (local_velocity * damping);
-            //spring.clamp_length_max(upright.spring.strength)
-            spring
+            let local_velocity = velocity.angular;// - ground_rot;
+
+            if desired_axis.is_finite() {
+                info!("desired_axis: {:.2?}", desired_axis);
+                let spring = (desired_axis * upright.spring.strength.get(mass.inertia))
+                    - (local_velocity * damping);
+                //spring.clamp_length_max(upright.spring.strength)
+                spring
+            } else {
+                Vec3::ZERO
+            }
         };
     }
 }

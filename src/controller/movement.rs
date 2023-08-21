@@ -44,13 +44,17 @@ impl Default for Movement {
 
 impl Movement {
     /// Calculate force scale.
-    pub fn force_scale(&self, gravity: &Gravity) -> Vec3 {
+    pub fn force_scale(&self, gravity: &Gravity, gizmos: &mut Gizmos) -> Vec3 {
         match self.force_scale {
             ForceScale::Vec3(v) => v,
             ForceScale::Up => {
                 if gravity.up_vector.length() > 0.0 {
                     let up = gravity.up_vector.normalize();
                     let (x, z) = up.any_orthonormal_pair();
+                    gizmos.ray(Vec3::ZERO, x, Color::PINK);
+                    gizmos.ray(Vec3::ZERO, z, Color::PINK);
+                    gizmos.ray(Vec3::ZERO, up, Color::YELLOW);
+                    info!("x: {:.1?}, z:{:.1?}", x, z);
                     x.abs() + z.abs()
                 } else {
                     Vec3::ONE
@@ -88,7 +92,7 @@ pub fn movement_force(
     globals: Query<&GlobalTransform>,
     masses: Query<&ReadMassProperties>,
     frictions: Query<&Friction>,
-    //mut gizmos: Gizmos,
+    mut gizmos: Gizmos,
 ) {
     let dt = ctx.integration_parameters.dt;
     for (
@@ -105,7 +109,10 @@ pub fn movement_force(
     {
         force.linear = Vec3::ZERO;
 
-        let force_scale = movement.force_scale(&gravity);
+        /*
+        let force_scale = movement.force_scale(&gravity, &mut gizmos);
+        info!("force scale: {:?}", force_scale);
+        */
 
         let input_dir = input.movement.clamp_length_max(1.0);
         let mut goal_vel = input_dir * movement.max_speed;
@@ -113,7 +120,7 @@ pub fn movement_force(
         let slip_vector = match ground.current() {
             Some(ground) if !ground.stable => {
                 let down_tangent = ground.cast.down_tangent(gravity.up_vector);
-                let slip_vector = (down_tangent * force_scale).normalize_or_zero();
+                let slip_vector = gravity.project(down_tangent).normalize_or_zero();
 
                 // Counteract the movement going up the slope.
                 let alignment = goal_vel.dot(slip_vector);
@@ -148,7 +155,7 @@ pub fn movement_force(
             Vec3::ZERO
         };
 
-        let relative_velocity = (velocity.linear - last_ground_vel) * force_scale;
+        let relative_velocity = gravity.project(velocity.linear - last_ground_vel);
         let friction_coefficient = if let Some(ground) = viable_ground.current() {
             let friction = frictions
                 .get(controller_entity)
@@ -162,11 +169,12 @@ pub fn movement_force(
             friction_coefficient
         } else {
             // Air damping coefficient
-            0.25
+            //0.25
+            0.85
         };
 
         let strength = movement.acceleration.get(mass.mass, dt);
-        let movement_force = goal_vel * strength * force_scale;
+        let movement_force = gravity.project(goal_vel * strength);
 
         let mut friction_velocity = relative_velocity;
         let goal_dir = goal_vel.normalize_or_zero();
@@ -175,7 +183,7 @@ pub fn movement_force(
         let difference = (goal_vel.length() - goal_align.max(0.0)).max(0.0);
         let displacement = difference * goal_dir;
 
-        let max_movement_force = displacement * mass.mass / dt * force_scale;
+        let max_movement_force = gravity.project(displacement * mass.mass / dt);
         let movement_force = movement_force.clamp_length_max(max_movement_force.length());
 
         let friction_align = goal_align;
@@ -183,7 +191,9 @@ pub fn movement_force(
         friction_velocity -= friction_offset * goal_dir;
 
         let friction_strength = Strength::Scaled(friction_coefficient.clamp(0.0, 1.0) * 45.0);
-        let friction_force = friction_velocity * friction_strength.get(mass.mass, dt) * force_scale;
+        //let friction_force = gravity.project(friction_velocity * friction_strength.get(mass.mass, dt));
+        let friction_force = friction_velocity * friction_strength.get(mass.mass, dt);
+        info!("friction_force: {:.2}", friction_force);
 
         /*
         let squish = 0.2;
