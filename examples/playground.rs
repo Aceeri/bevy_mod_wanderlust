@@ -732,6 +732,7 @@ fn mouse_look(
 
     let sens = sensitivity.0;
     let cumulative: Vec2 = -(input.iter().map(|motion| &motion.delta).sum::<Vec2>());
+
     player_cam.pitch += cumulative.y as f32 / 180.0 * sens;
     player_cam.yaw += cumulative.x as f32 / 180.0 * sens;
 

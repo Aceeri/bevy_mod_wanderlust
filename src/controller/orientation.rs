@@ -122,10 +122,10 @@ pub fn upright_force(
         &Gravity,
         &ControllerMass,
         &ControllerVelocity,
-        /*&ViableGroundCast,*/
+        &ViableGroundCast,
     )>,
 ) {
-    for (mut impulse, upright, tf, gravity, mass, velocity, /*viable_ground*/) in &mut query {
+    for (mut impulse, upright, tf, gravity, mass, velocity, viable_ground) in &mut query {
         impulse.angular = {
             let desired_axis = if let Some(forward) = upright.forward_vector {
                 let right = gravity.up_vector.cross(forward).normalize();
@@ -145,23 +145,16 @@ pub fn upright_force(
 
             let damping = upright.spring.damp_coefficient(mass.inertia);
 
-            /*
             let ground_rot = if let Some(ground) = viable_ground.last() {
-                ground.angular_velocity
+                ground.angular_velocity.project_onto(gravity.up_vector)
             } else {
                 Vec3::ZERO
             };
 
             let local_velocity = velocity.angular - ground_rot;
-            let projected_vel = if local_velocity.length() > 0.0 && desired_axis.length() > 0.0 {
-                local_velocity.project_onto(desired_axis)
-            } else {
-                Vec3::ZERO
-            };
-            */
 
             let spring = (desired_axis * upright.spring.strength.get(mass.inertia))
-                - (velocity.angular * damping);
+                - (local_velocity * damping);
             //spring.clamp_length_max(upright.spring.strength)
             spring
         };
