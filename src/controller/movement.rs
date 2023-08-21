@@ -51,10 +51,6 @@ impl Movement {
                 if gravity.up_vector.length() > 0.0 {
                     let up = gravity.up_vector.normalize();
                     let (x, z) = up.any_orthonormal_pair();
-                    gizmos.ray(Vec3::ZERO, x, Color::PINK);
-                    gizmos.ray(Vec3::ZERO, z, Color::PINK);
-                    gizmos.ray(Vec3::ZERO, up, Color::YELLOW);
-                    info!("x: {:.1?}, z:{:.1?}", x, z);
                     x.abs() + z.abs()
                 } else {
                     Vec3::ONE
@@ -80,6 +76,7 @@ pub fn movement_force(
     ctx: Res<RapierContext>,
     mut query: Query<(
         Entity,
+        &GlobalTransform,
         &mut MovementForce,
         &mut Movement,
         &Gravity,
@@ -97,6 +94,7 @@ pub fn movement_force(
     let dt = ctx.integration_parameters.dt;
     for (
         controller_entity,
+        control_global,
         mut force,
         movement,
         gravity,
@@ -114,7 +112,19 @@ pub fn movement_force(
         info!("force scale: {:?}", force_scale);
         */
 
-        let input_dir = input.movement.clamp_length_max(1.0);
+        let rot = Quat::from_rotation_arc(gravity.up_vector, Vec3::Y);
+        let input_dir = gravity.project(rot * input.movement.clamp_length_max(1.0));
+
+        info!("input dir : {:.1?}", input_dir);
+
+        /*
+        let (x, z) = gravity.up_vector.any_orthonormal_pair();
+        let x = movement_force.project_onto(x);
+        let z = movement_force.project_onto(z);
+        gizmos.ray(control_global.translation(), x, Color::YELLOW);
+        gizmos.ray(control_global.translation(), z, Color::YELLOW);
+        */
+
         let mut goal_vel = input_dir * movement.max_speed;
 
         let slip_vector = match ground.current() {
@@ -155,7 +165,7 @@ pub fn movement_force(
             Vec3::ZERO
         };
 
-        let relative_velocity = gravity.project(velocity.linear - last_ground_vel);
+        let relative_velocity = velocity.linear - last_ground_vel;
         let friction_coefficient = if let Some(ground) = viable_ground.current() {
             let friction = frictions
                 .get(controller_entity)
@@ -169,12 +179,12 @@ pub fn movement_force(
             friction_coefficient
         } else {
             // Air damping coefficient
-            //0.25
-            0.85
+            0.25
+            //0.85
         };
 
         let strength = movement.acceleration.get(mass.mass, dt);
-        let movement_force = gravity.project(goal_vel * strength);
+        let movement_force = goal_vel * strength;
 
         let mut friction_velocity = relative_velocity;
         let goal_dir = goal_vel.normalize_or_zero();
@@ -193,7 +203,6 @@ pub fn movement_force(
         let friction_strength = Strength::Scaled(friction_coefficient.clamp(0.0, 1.0) * 45.0);
         //let friction_force = gravity.project(friction_velocity * friction_strength.get(mass.mass, dt));
         let friction_force = friction_velocity * friction_strength.get(mass.mass, dt);
-        info!("friction_force: {:.2}", friction_force);
 
         /*
         let squish = 0.2;

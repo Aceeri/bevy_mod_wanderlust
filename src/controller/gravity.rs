@@ -36,6 +36,10 @@ impl Gravity {
             other
         }
     }
+
+    pub fn rotation(&self) -> Quat {
+        Quat::from_rotation_arc(self.up_vector, Vec3::Y)
+    }
 }
 
 /// Calculated gravity force.

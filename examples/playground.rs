@@ -135,18 +135,14 @@ struct Sensitivity(f32);
 pub fn change_gravity(input: Res<Input<KeyCode>>, mut gravities: Query<&mut Gravity>) {
     for mut gravity in &mut gravities {
         if input.pressed(KeyCode::O) {
-            gravity.up_vector = Quat::from_rotation_x(1.0 * std::f32::consts::PI / 180.0) * gravity.up_vector;
+            gravity.up_vector = Quat::from_rotation_x(2.0 * std::f32::consts::PI / 180.0) * gravity.up_vector;
         }
 
         if input.pressed(KeyCode::I) {
-            gravity.up_vector = Quat::from_rotation_z(1.0 * std::f32::consts::PI / 180.0) * gravity.up_vector;
+            gravity.up_vector = Quat::from_rotation_x(2.0 * std::f32::consts::PI / 180.0) * gravity.up_vector;
         }
 
         gravity.up_vector = gravity.up_vector.normalize();
-
-        info!(
-            "up: {:?}", gravity.up_vector.length(),
-        );
     }
 }
 
@@ -739,7 +735,7 @@ fn movement_input(
 fn mouse_look(
     globals: Query<&GlobalTransform>,
     mut cam: Query<(&mut Transform, &mut PlayerCam)>,
-    mut upright: Query<&mut Upright>,
+    mut upright: Query<(&mut Upright, &Gravity)>,
     sensitivity: Res<Sensitivity>,
     mut input: EventReader<MouseMotion>,
 ) {
@@ -747,7 +743,7 @@ fn mouse_look(
     let target_global = globals.get(player_cam.target).unwrap();
     cam_tf.translation = target_global.translation();
 
-    let mut upright = upright.single_mut();
+    let (mut upright, gravity) = upright.single_mut();
 
     let sens = sensitivity.0;
     let cumulative: Vec2 = -(input.iter().map(|motion| &motion.delta).sum::<Vec2>());
@@ -761,8 +757,14 @@ fn mouse_look(
         .pitch
         .clamp(-pitch_limit + 5.0 * PI / 180.0, pitch_limit);
 
-    cam_tf.rotation =
-        Quat::from_rotation_y(player_cam.yaw) * Quat::from_rotation_x(player_cam.pitch);
+    let (x, z) = gravity.up_vector.any_orthonormal_pair();
+    let x = Quat::from_scaled_axis(x);
+    let z = Quat::from_scaled_axis(z);
+    let y = Quat::from_scaled_axis(gravity.up_vector);
+    let rot = x * z * y;
+
+    cam_tf.rotation = y;
+        //Quat::from_rotation_y(player_cam.yaw) * Quat::from_rotation_x(player_cam.pitch) * gravity.rotation();
     //upright.forward_vector = Some(Quat::from_rotation_y(player_cam.yaw) * Vec3::X);
 }
 
