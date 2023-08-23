@@ -14,14 +14,19 @@ pub struct Gravity {
     ///
     /// The default is `Vec3::Y`.
     pub up_vector: Vec3,
+    /// Direction we face.
+    ///
+    /// The default is `Vec3::NEG_Z`.
+    pub forward_vector: Vec3,
 }
 
 impl Default for Gravity {
     fn default() -> Self {
         Gravity {
             acceleration: -9.817,
-            //up_vector: Vec3::Y,
-            up_vector: (Vec3::new(1.0, 0.0, 0.0) + Vec3::new(0.0, 0.0, 1.0)).normalize(),
+            up_vector: Vec3::Y,
+            //up_vector: (Vec3::new(1.0, 0.0, 0.0) + Vec3::new(0.0, 0.0, 1.0)).normalize(),
+            forward_vector: Vec3::NEG_Z,
         }
     }
 }
@@ -38,7 +43,8 @@ impl Gravity {
     }
 
     pub fn rotation(&self) -> Quat {
-        Quat::from_rotation_arc(self.up_vector, Vec3::Y)
+        Transform::default().looking_to(self.forward_vector, self.up_vector).rotation
+        //Quat::from_rotation_arc(self.up_vector, Vec3::Y)
     }
 }
 

@@ -39,7 +39,7 @@ impl Plugin for WanderlustPlugin {
                 determine_groundedness,
                 gravity_force,
                 movement_force,
-                //float_force,
+                float_force,
                 //upright_force,
                 //jump_force,
                 accumulate_forces,
