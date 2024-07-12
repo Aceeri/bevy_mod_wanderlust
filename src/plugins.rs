@@ -1,5 +1,9 @@
 use crate::controller::*;
-use bevy::{ecs::{intern::Interned, schedule::ScheduleLabel}, prelude::*, utils::HashSet};
+use bevy::{
+    ecs::{intern::Interned, schedule::ScheduleLabel},
+    prelude::*,
+    utils::HashSet,
+};
 use bevy_rapier3d::prelude::*;
 
 /// The [character controller](CharacterController) plugin. Necessary to have the character controller

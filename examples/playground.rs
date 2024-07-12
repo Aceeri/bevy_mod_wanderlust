@@ -3,10 +3,10 @@
 use bevy::render::camera::Projection;
 use bevy::window::CursorGrabMode;
 use bevy::{
+    color::palettes::css,
     input::mouse::MouseMotion,
     prelude::*,
     window::{Cursor, PrimaryWindow},
-    color::palettes::css,
 };
 use bevy_framepace::*;
 use bevy_mod_wanderlust::{
@@ -137,12 +137,10 @@ pub fn player(
     mut meshes: ResMut<Assets<Mesh>>,
     mut mats: ResMut<Assets<StandardMaterial>>,
 ) {
-    let mesh = meshes.add(
-        Capsule3d {
-            radius: 0.3,
-            half_length: 0.5,
-        }
-    );
+    let mesh = meshes.add(Capsule3d {
+        radius: 0.3,
+        half_length: 0.5,
+    });
 
     let material = mats.add(Color::from(css::WHITE));
 
@@ -223,7 +221,9 @@ pub fn player(
                     ..default()
                 },))
                 .with_children(|commands| {
-                    let mesh = meshes.add(Cuboid { half_size: Vec3::splat(0.25) });
+                    let mesh = meshes.add(Cuboid {
+                        half_size: Vec3::splat(0.25),
+                    });
 
                     commands.spawn(PbrBundle {
                         mesh,
@@ -241,11 +241,7 @@ pub fn free_objects(
     mut mats: ResMut<Assets<StandardMaterial>>,
 ) {
     let material = mats.add(Color::from(css::WHITE));
-    let mesh = meshes.add(
-        Sphere {
-            radius: 0.5,
-        }
-    );
+    let mesh = meshes.add(Sphere { radius: 0.5 });
     commands.spawn((
         PbrBundle {
             mesh,
@@ -270,12 +266,10 @@ pub fn ground(
     let material = mats.add(Color::from(css::BLACK));
 
     let size = 1000.0;
-    let mesh = meshes.add(
-        Plane3d {
-            half_size: Vec2::splat(size / 2.0),
-            ..default()
-        }
-    );
+    let mesh = meshes.add(Plane3d {
+        half_size: Vec2::splat(size / 2.0),
+        ..default()
+    });
 
     commands.spawn((
         PbrBundle {
@@ -285,18 +279,21 @@ pub fn ground(
             ..default()
         },
         Collider::halfspace(Vec3::Y).unwrap(),
-        ColliderDebugColor(Srgba {
-            red: 0.0,
-            green: 0.0,
-            blue: 0.0,
-            alpha: 0.0,
-        }.into()),
+        ColliderDebugColor(
+            Srgba {
+                red: 0.0,
+                green: 0.0,
+                blue: 0.0,
+                alpha: 0.0,
+            }
+            .into(),
+        ),
         //Collider::cuboid(size / 2.0, 0.1, size / 2.0),
         Name::from("Ground"),
     ));
 
     let material = mats.add(Color::from(css::WHITE));
-    let mesh = meshes.add( Sphere::new(0.5));
+    let mesh = meshes.add(Sphere::new(0.5));
     commands.spawn((
         PbrBundle {
             mesh,
@@ -345,7 +342,9 @@ pub fn stairs(
         ..default()
     });
 
-    let mesh = meshes.add(Mesh::from(Cuboid { half_size: Vec3::splat(0.5) }));
+    let mesh = meshes.add(Mesh::from(Cuboid {
+        half_size: Vec3::splat(0.5),
+    }));
     steps(
         Transform {
             translation: Vec3::new(5.0, 0.0, -5.0),
@@ -451,7 +450,9 @@ pub fn walls(
         commands
             .spawn((
                 PbrBundle {
-                    mesh: meshes.add(Mesh::from(Cuboid { half_size: Vec3::splat(0.5), })),
+                    mesh: meshes.add(Mesh::from(Cuboid {
+                        half_size: Vec3::splat(0.5),
+                    })),
                     material: material,
                     transform: Transform {
                         translation: Vec3::new(0.0, 0.0, part as f32 * width),
@@ -469,7 +470,9 @@ pub fn walls(
     commands
         .spawn((
             PbrBundle {
-                mesh: meshes.add(Mesh::from(Cuboid { half_size: Vec3::splat(0.5), })),
+                mesh: meshes.add(Mesh::from(Cuboid {
+                    half_size: Vec3::splat(0.5),
+                })),
                 material: materials[0].clone(),
                 transform: Transform {
                     translation: Vec3::new(0.0, 0.0, ((parts + 1) as f32 * width) * 1.5),
@@ -506,7 +509,9 @@ pub fn slopes(
         let rotation_diff = width * radians;
         commands.spawn((
             PbrBundle {
-                mesh: meshes.add(Mesh::from(Cuboid { half_size: Vec3::splat(0.5), })),
+                mesh: meshes.add(Mesh::from(Cuboid {
+                    half_size: Vec3::splat(0.5),
+                })),
                 material: material.clone(),
                 transform: Transform {
                     translation: Vec3::new(rotation_diff, 0.0, angle as f32 * width + width * 2.0),
@@ -521,7 +526,9 @@ pub fn slopes(
 
         commands.spawn((
             PbrBundle {
-                mesh: meshes.add(Mesh::from(Cuboid { half_size: Vec3::splat(0.5), })),
+                mesh: meshes.add(Mesh::from(Cuboid {
+                    half_size: Vec3::splat(0.5),
+                })),
                 material: material.clone(),
                 transform: Transform {
                     translation: Vec3::new(
@@ -557,7 +564,9 @@ pub fn moving_objects(
     let simple_width = 3.0;
     commands.spawn((
         PbrBundle {
-            mesh: meshes.add(Mesh::from(Cuboid { half_size: Vec3::splat(0.5), })),
+            mesh: meshes.add(Mesh::from(Cuboid {
+                half_size: Vec3::splat(0.5),
+            })),
             material: material.clone(),
             transform: Transform {
                 translation: Vec3::new(-5.0, 0.3, 10.0),
@@ -604,7 +613,9 @@ pub fn moving_objects(
     let simple_width = 3.0;
     commands.spawn((
         PbrBundle {
-            mesh: meshes.add(Mesh::from(Cuboid { half_size: Vec3::splat(0.5) })),
+            mesh: meshes.add(Mesh::from(Cuboid {
+                half_size: Vec3::splat(0.5),
+            })),
             material: material.clone(),
             transform: Transform {
                 translation: Vec3::new(-5.0, 0.3, 10.0),

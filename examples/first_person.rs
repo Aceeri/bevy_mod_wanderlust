@@ -3,10 +3,10 @@
 use bevy::render::camera::Projection;
 use bevy::window::CursorGrabMode;
 use bevy::{
+    color::palettes::css,
     input::mouse::MouseMotion,
     prelude::*,
     window::{Cursor, PrimaryWindow},
-    color::palettes::css,
 };
 use bevy_framepace::{FramepacePlugin, FramepaceSettings, Limiter};
 use bevy_mod_wanderlust::{
@@ -78,13 +78,11 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut mats: ResMut<Assets<StandardMaterial>>,
 ) {
-    let mesh = meshes.add(
-        Capsule3d {
-            radius: 0.5,
-            half_length: 0.5, 
-            ..default()
-        }
-    );
+    let mesh = meshes.add(Capsule3d {
+        radius: 0.5,
+        half_length: 0.5,
+        ..default()
+    });
 
     let material = mats.add(Color::from(css::WHITE));
 
@@ -127,7 +125,9 @@ fn setup(
                     PlayerCam,
                 ))
                 .with_children(|commands| {
-                    let mesh = meshes.add(Cuboid { half_size: Vec3::splat(0.25), });
+                    let mesh = meshes.add(Cuboid {
+                        half_size: Vec3::splat(0.25),
+                    });
 
                     commands.spawn(PbrBundle {
                         mesh,
@@ -159,7 +159,7 @@ fn setup(
     let (hw, hh, hl) = (1.5, 0.5, 5.0);
     let min = Vec3::new(-hw, -hh, -hl);
     let max = Vec3::new(hw, hh, hl);
-    let mesh = meshes.add( Cuboid::from_corners(min, max));
+    let mesh = meshes.add(Cuboid::from_corners(min, max));
 
     commands.spawn((
         PbrBundle {
@@ -180,7 +180,7 @@ fn setup(
     let (hw, hh, hl) = (0.25, 3.0, 5.0);
     let min = Vec3::new(-hw, -hh, -hl);
     let max = Vec3::new(hw, hh, hl);
-    let mesh = meshes.add( Cuboid::from_corners(min, max));
+    let mesh = meshes.add(Cuboid::from_corners(min, max));
 
     commands.spawn((
         PbrBundle {
